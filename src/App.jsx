@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "./lib/supabase";
+import { supabase } from "./supabase";
 import "./index.css";
 
 /* ---------- helpers ---------- */
@@ -67,7 +67,7 @@ function Login() {
       <div className="login-card">
         <div className="star" aria-hidden="true" />
         <h1>الدرر السنية</h1>
-        <p className="muted">سجّلي دخولك لتري آياتك القادمة.</p>
+        <p className="muted">سجّلي دخولك لتري أبياتك القادمة.</p>
         <form onSubmit={submit}>
           <label>
             البريد الإلكتروني
@@ -200,14 +200,14 @@ function Home({ user }) {
       {err && <p className="error banner">{err}</p>}
 
       <section className="hero">
-        <p className="hero-label">آياتك القادمة</p>
+        <p className="hero-label">أبياتك القادمة</p>
         <p className="big" lang="ar">{label(from, to)}</p>
-        <p className="hero-sub">تبدأين من الآية {ar(from)}</p>
+        <p className="hero-sub">تبدأين من البيت {ar(from)}</p>
       </section>
 
       <section className="card">
-        <h2>كم آية حفظتِ؟</h2>
-        <div className="chips" role="group" aria-label="عدد الآيات">
+        <h2>كم بيتًا حفظتِ؟</h2>
+        <div className="chips" role="group" aria-label="عدد الأبيات">
           {[1, 2, 3, 4, 5, 6].map((n) => (
             <button
               key={n}
@@ -230,7 +230,7 @@ function Home({ user }) {
         {isFriday && <p className="muted note">الجمعة يوم راحة. اختاري يومًا آخر للتسجيل.</p>}
 
         <button className="check" disabled={isFriday} onClick={log}>
-          {saved ? "تم الحفظ ✓" : "حفظتُ هذه الآيات"}
+          {saved ? "تم الحفظ ✓" : "حفظتُ هذه الأبيات"}
         </button>
       </section>
 
@@ -246,7 +246,7 @@ function Home({ user }) {
                 <span className="avatar" aria-hidden="true">{initial(p.name)}</span>
                 <span className="grow">
                   <strong>{arName(p.name)}</strong>
-                  <span className="muted block">وصلت إلى الآية <bdi>{ar(upto(p))}</bdi></span>
+                  <span className="muted block">وصلت إلى البيت <bdi>{ar(upto(p))}</bdi></span>
                 </span>
                 <span className="state">
                   {today.length ? (
@@ -297,7 +297,7 @@ function Home({ user }) {
             </select>
           </label>
           <p className="muted">
-            الآيات المحفوظة قبل استخدام الموقع: إلى الآية {ar(startTarget.memorized_upto)}.
+            الأبيات المحفوظة قبل استخدام الموقع: إلى البيت {ar(startTarget.memorized_upto)}.
           </p>
           <div className="row">
             <input
