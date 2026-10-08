@@ -36,8 +36,8 @@ const addDays = (d, n) => {
 const longDate = (d) =>
   d.toLocaleDateString("ar-EG", { day: "numeric", month: "long", year: "numeric" });
 
-// getDay() values; Friday (5) is a rest day so it is not listed
-const WEEK = [[6, "السبت"], [0, "الأحد"], [1, "الاثنين"], [2, "الثلاثاء"], [3, "الأربعاء"], [4, "الخميس"]];
+// getDay() values; Friday (5) is a rest day unless chosen as a fast day
+const WEEK = [[6, "السبت"], [0, "الأحد"], [1, "الاثنين"], [2, "الثلاثاء"], [3, "الأربعاء"], [4, "الخميس"], [5, "الجمعة"]];
 const DEFAULT_PLAN = { base: 2, fastCount: 4, fast: [4] };
 const plannedFor = (plan, s) =>
   plan.fast.includes(parse(s).getDay()) ? plan.fastCount : plan.base;
@@ -50,7 +50,7 @@ function finishDate(remaining, plan, from) {
     if (left <= 0) return d;
     d = addDays(d, 1);
     const wd = d.getDay();
-    if (wd === 5) continue;
+    if (wd === 5 && !plan.fast.includes(5)) continue;
     left -= plan.fast.includes(wd) ? plan.fastCount : plan.base;
   }
   return null;
@@ -324,7 +324,7 @@ function Home({ user }) {
         {date !== todayKey && (
           <p className="muted note">أنتِ تسجّلين ليوم {pretty(date)} وليس اليوم.</p>
         )}
-        {isFriday && <p className="muted note">الجمعة يوم راحة في الخطة، لكن يمكنك التسجيل فيها للاستدراك.</p>}
+        {isFriday && <p className="muted note">{plan.fast.includes(5) ? "الجمعة يوم تسريع في خطتكما." : "الجمعة يوم راحة في الخطة، لكن يمكنك التسجيل فيها للاستدراك."}</p>}
 
         <button className="check" onClick={log}>
           {saved ? "تم الحفظ ✓" : "حفظتُ هذه الأبيات"}
@@ -445,7 +445,8 @@ function Plan({ plan, setPlan, profiles, upto, me, pace, streak, startFrom, goal
   const saved = planned && atPace ? Math.round((atPace - planned) / DAY_MS) : 0;
   const nextGoal = goals.map((g) => g.target).filter((t) => t > done).sort((a, b) => a - b)[0];
   const next = nextGoal ?? Math.min(TOTAL, (Math.floor(done / 100) + 1) * 100);
-  const weekly = plan.base * (6 - plan.fast.length) + plan.fastCount * plan.fast.length;
+  const nonFriFast = plan.fast.filter((x) => x !== 5).length;
+  const weekly = plan.base * (6 - nonFriFast) + plan.fastCount * plan.fast.length;
   const toggle = (wd) =>
     setPlan({
       ...plan,
@@ -540,7 +541,7 @@ function Plan({ plan, setPlan, profiles, upto, me, pace, streak, startFrom, goal
         </div>
 
         <p className="muted note">
-          مجموع الأسبوع حسب خطتك: <bdi>{ar(weekly)}</bdi> بيتًا (الجمعة راحة في الخطة، ويمكن التسجيل فيها للاستدراك). الخطة مشتركة بينكما.
+          مجموع الأسبوع حسب خطتك: <bdi>{ar(weekly)}</bdi> بيتًا (الجمعة راحة إلا إذا اخترتِها يوم تسريع). الخطة مشتركة بينكما.
         </p>
       </details>
     </section>
