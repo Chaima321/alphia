@@ -383,27 +383,7 @@ function Home({ user }) {
         </ul>
       </section>
 
-      {entries.length > 0 && (
-        <section className="card">
-          <h2>السجل</h2>
-          <ul className="history">
-            {entries.slice(0, 40).map((e) => (
-              <li key={e.id}>
-                <div>
-                  <strong>{pretty(e.day)}</strong>
-                  <span className="muted block">{nameOf(e.user_id)}</span>
-                </div>
-                <div className="hist-right">
-                  <bdi className="nums">{label(e.from_verse, e.to_verse)}</bdi>
-                  {e.user_id === user.id && (
-                    <button className="link danger" onClick={() => remove(e.id)}>حذف</button>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <HistoryCalendar entries={entries} profiles={profiles} meId={user.id} onRemove={remove} />
 
       {isAdmin && (
         <details className="settings">
@@ -654,6 +634,111 @@ function NextGoal({ goals, upto, me, plan, startFrom }) {
         باقي <b><bdi>{ar(left)}</bdi></b> {left === 1 ? "بيت" : "أبيات"}
         {eta && <> · المتوقع <b>{longDate(eta)}</b></>}
       </p>
+    </section>
+  );
+}
+
+/* ---------- history calendar ---------- */
+const DAY_NAMES = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
+
+function HistoryCalendar({ entries, profiles, meId, onRemove }) {
+  const now = new Date();
+  const todayKey = key(now);
+  const [month, setMonth] = useState(() => new Date(now.getFullYear(), now.getMonth(), 1));
+  const [who, setWho] = useState(meId);
+  const [sel, setSel] = useState(todayKey);
+
+  const mine = entries.filter((e) => e.user_id === who);
+  const logged = new Set(mine.map((e) => e.day));
+  const first = mine.length ? mine.map((e) => e.day).sort()[0] : null;
+
+  const y = month.getFullYear();
+  const m = month.getMonth();
+  const offset = (month.getDay() + 1) % 7; // week starts on Saturday
+  const total = new Date(y, m + 1, 0).getDate();
+  const cells = [...Array(offset).fill(null), ...Array.from({ length: total }, (_, i) => i + 1)];
+  const isCurrent = y === now.getFullYear() && m === now.getMonth();
+
+  const status = (k, d) => {
+    if (logged.has(k)) return "done";
+    if (first && k >= first && k < todayKey && new Date(y, m, d).getDay() !== 5) return "miss";
+    return "";
+  };
+  const go = (n) => setMonth(new Date(y, m + n, 1));
+  const dayEntries = entries.filter((e) => e.day === sel);
+
+  return (
+    <section className="card">
+      <h2>السجل</h2>
+
+      {profiles.length > 1 && (
+        <div className="chips who-tabs" role="group" aria-label="الشخص">
+          {profiles.map((p) => (
+            <button
+              key={p.id}
+              className={p.id === who ? "chip wide on" : "chip wide"}
+              aria-pressed={p.id === who}
+              onClick={() => setWho(p.id)}
+            >
+              {arName(p.name)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="cal-head">
+        <button className="cal-nav" onClick={() => go(-1)} aria-label="الشهر السابق">›</button>
+        <strong>{month.toLocaleDateString("ar-EG-u-nu-latn", { month: "long", year: "numeric" })}</strong>
+        <button className="cal-nav" onClick={() => go(1)} disabled={isCurrent} aria-label="الشهر التالي">‹</button>
+      </div>
+
+      <div className="cal-grid cal-names">
+        {DAY_NAMES.map((n) => (
+          <span key={n}>{n}</span>
+        ))}
+      </div>
+      <div className="cal-grid">
+        {cells.map((d, i) => {
+          if (d === null) return <span key={`e${i}`} />;
+          const k = key(new Date(y, m, d));
+          const st = status(k, d);
+          return (
+            <button
+              key={k}
+              className={`cal-day ${st} ${k === sel ? "sel" : ""} ${k === todayKey ? "today" : ""}`}
+              onClick={() => setSel(k)}
+              aria-label={pretty(k)}
+            >
+              {d}
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="cal-legend muted">
+        <span className="dot done" /> سجّلت <span className="dot miss" /> فاتها اليوم
+      </p>
+
+      <div className="cal-detail">
+        <strong>{pretty(sel)}</strong>
+        {dayEntries.length === 0 ? (
+          <p className="muted note">لا توجد تسجيلات في هذا اليوم.</p>
+        ) : (
+          <ul className="history">
+            {dayEntries.map((e) => (
+              <li key={e.id}>
+                <span>{arName(profiles.find((p) => p.id === e.user_id)?.name)}</span>
+                <div className="hist-right">
+                  <bdi className="nums">{label(e.from_verse, e.to_verse)}</bdi>
+                  {e.user_id === meId && (
+                    <button className="link danger" onClick={() => onRemove(e.id)}>حذف</button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </section>
   );
 }
